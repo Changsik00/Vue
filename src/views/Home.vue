@@ -1,36 +1,39 @@
 <template>
 	<!-- <HelloWorld /> -->
-	<div style="padding: 30px">
-		<div style="position: relative;">
+	<div style="padding: 30px; position: relative; margin: 30px;">
+		<div class="aspect-ratio-box">
 			<video-player ref="videoPlayer" :options="playerOptions" />
-			<div
-				v-show="editMode"
-				style="width: 1280px; height: 720px; border: 1px solid red; position: absolute; top: 0; left:0; background: white"
-			>
-				<img style="width: 100px; position: absolute;" :style="transform" src="@/assets/img/puppy.jpg" />
+			<div v-if="editMode" class="aspect-ratio-box-inside">
+				<img v-if="backgroundImg" class="video-background-img" :src="backgroundImg" />
+				<img class="video-character-img" :style="transform" :src="require(`@/assets/img/${character}.png`)" />
+				<div class="vidio-character-img-mask" :style="imageMask"></div>
+			</div>
+			<div style="padding: 30px; background: white; z-index: 100; position: absolute; top: 100%;">
+				<button style="padding: 20px; margin: 20xp" @click="start">start</button>
+				<button style="padding: 20px; margin: 20xp" @click="pause">pause</button>
+				<button style="padding: 20px; margin: 20xp" @click="add">add</button>
+				<button style="padding: 20px; margin: 20xp" @click="prev">prev</button>
+				<button style="padding: 20px; margin: 20xp" @click="next">next</button>
+				<button style="padding: 20px; margin: 20xp" @click="toggle">toggle</button>
+				<button style="padding: 20px; margin: 20xp" @click="changePosition">position</button>
+				<button style="padding: 20px; margin: 20xp" @click="updown">updown</button>
+				<button style="padding: 20px; margin: 20xp" @click="reverse">reverse</button>
+				<button style="padding: 20px; margin: 20xp" @click="changeCharacter">character</button>
+				<input ref="imageInput" type="file" hidden @change="onChangeImages" />
+				<v-btn type="button" @click="onClickImageUpload">이미지 업로드</v-btn>
+				<vue-slider
+					style="width: 400px;"
+					v-model="value"
+					:max="max"
+					@drag-end="dragEnd"
+					@drag-start="dragStart"
+					:drag-on-click="true"
+					:dotSize="4"
+					:process-style="{backgroundColor: '#ff8400'}"
+					:tooltipFormatter="tooltipFormatter"
+				/>
 			</div>
 		</div>
-
-		<button style="padding: 20px; margin: 20xp" @click="start">start</button>
-		<button style="padding: 20px; margin: 20xp" @click="pause">pause</button>
-		<button style="padding: 20px; margin: 20xp" @click="add">add</button>
-		<button style="padding: 20px; margin: 20xp" @click="prev">prev</button>
-		<button style="padding: 20px; margin: 20xp" @click="next">next</button>
-		<button style="padding: 20px; margin: 20xp" @click="toggle">toggle</button>
-		<button style="padding: 20px; margin: 20xp" @click="changePosition">position</button>
-		<button style="padding: 20px; margin: 20xp" @click="updown">updown</button>
-		<button style="padding: 20px; margin: 20xp" @click="reverse">reverse</button>
-		<vue-slider
-			style="width: 400px;"
-			v-model="value"
-			:max="max"
-			@drag-end="dragEnd"
-			@drag-start="dragStart"
-			:drag-on-click="true"
-			:dotSize="4"
-			:process-style="{backgroundColor: 'pink'}"
-			:tooltipFormatter="tooltipFormatter"
-		/>
 	</div>
 </template>
 
@@ -46,27 +49,22 @@ export default {
 
 	data() {
 		return {
-			editMode: true,
+			editMode: false,
 			tranformX: false,
 			tranformY: false,
 			position: 0,
 			count: 0,
 			value: 0,
 			max: 0,
+			backgroundImg: null,
+			character: 'mioh',
 			inDragging: false,
 			playerOptions: {
-				// aspectRatio: '4:3',
-				width: 1280,
-				height: 720,
+				aspectRatio: '16:9',
 				controls: false,
-				sources: [],
 			},
 
 			sources: [
-				// {
-				// 	type: 'video/mp4',
-				// 	src: 'https://files.osf.io/v1/resources/h3e2974pj8/providers/osfstorage/5b7bf5e02da7bb001b70d8e4?direct=&mode=render&version=1',
-				// },
 				{
 					type: 'video/mp4',
 					src: 'http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4',
@@ -94,10 +92,17 @@ export default {
 		player() {
 			return this.$refs.videoPlayer.player
 		},
-		transform() {
-			let ret = 'bottom: 0;'
+		imageMask() {
+			let ret = 'bottom: -10%;'
 			if (this.tranformY) {
-				ret = 'top: 0;'
+				ret = 'top: -10%;'
+			}
+			return ret
+		},
+		transform() {
+			let ret = 'bottom: -10%;'
+			if (this.tranformY) {
+				ret = 'top: -10%;'
 			}
 			if (this.tranformX && this.tranformY) {
 				ret += 'transform: rotate(180deg)'
@@ -142,72 +147,36 @@ export default {
 	methods: {
 		start() {
 			this.max = parseInt(this.player.duration())
+
 			this.player.play()
 		},
 		pause() {
 			this.player.pause()
-			// this.player.dispose()
-			// this.playerOptions.sources = [
-			// 	{
-			// 		type: 'video/mp4',
-			// 		src: 'https://cdn.theguardian.tv/webM/2015/07/20/150716YesMen_synd_768k_vp8.webm',
-			// 	},
-			// ]
-			// this.player.src('https://cdn.theguardian.tv/webM/2015/07/20/150716YesMen_synd_768k_vp8.webm')
-			// this.player.src('http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4')
 		},
 		add() {
 			const res = this.sources[this.count % this.sources.length]
-			// this.playerOptions.sources.push(res)
-			// this.playerOptions.sources = [res]
+			this.player.currentTime(this.value)
 			this.player.src(res)
 		},
 		prev() {
 			this.count = this.count - 1
 			if (this.count < 0) this.count = 0
-			// console.log('#@#', this.playerOptions.sources)
-			// const src = this.playerOptions.sources[this.count].src
-
-			// console.log('#@# src', src)
-			// this.player.src(src)
-			// this.add()
-			// console.log('#@#', this.playerOptions.sources)
 		},
 		next() {
 			this.count = this.count + 1
-			// this.add()
-			// this.player.src(this.playerOptions.sources[this.count])
-
-			// console.log('#@#', this.playerOptions.sources)
-			// console.log('#@# src', this.playerOptions.sources[this.count].src)
-			// this.player.poster('http://example.com/myImage.jpg')
-			// this.player.src(
-			// 	'https://files.osf.io/v1/resources/h3e2974pj8/providers/osfstorage/5b7bf5e02da7bb001b70d8e4?direct=&mode=render&version=1'
-			// )
-			// this.player.src('https://ia800701.us.archive.org/26/items/SampleVideo1280x7205mb/SampleVideo_1280x720_5mb.mp4')
-
-			// this.playerOptions.sources = [
-			// 	{
-			// 		type: 'video/mp4',
-			// 		src: 'https://files.osf.io/v1/resources/h3e2974pj8/providers/osfstorage/5b7bf5e02da7bb001b70d8e4?direct=&mode=render&version=1',
-			// 	},
-			// ]
 		},
 
 		dragStart() {
 			this.inDragging = true
-			// this.player.pause()
 		},
 		dragEnd() {
 			this.inDragging = false
-			// this.player.currentTime(this.value)
-			// this.player.play()
 		},
 		tooltipFormatter() {
 			return this.toHHMMSS(this.value)
 		},
 		toHHMMSS(num) {
-			var sec_num = parseInt(num, 10) // don't forget the second param
+			var sec_num = parseInt(num, 10)
 			var hours = Math.floor(sec_num / 3600)
 			var minutes = Math.floor((sec_num - hours * 3600) / 60)
 			var seconds = sec_num - hours * 3600 - minutes * 60
@@ -241,24 +210,62 @@ export default {
 		reverse() {
 			this.tranformX = !this.tranformX
 		},
+		changeCharacter() {
+			this.character == 'tommy' ? (this.character = 'mioh') : (this.character = 'tommy')
+		},
+		onClickImageUpload() {
+			this.$refs.imageInput.click()
+		},
+		onChangeImages(e) {
+			const file = e.target.files[0]
+			this.backgroundImg = URL.createObjectURL(file)
+		},
 	},
 }
 </script>
 <style lang="scss">
 .vue-slider-dot-handle {
-	background-color: red !important;
-	border: 1px solid red;
-	&:hover {
-		background-color: red !important;
-		border: 1px solid red;
-	}
+	background-color: #ff8400 !important;
+	border-color: #ff8400 !important;
 }
 .vue-slider-dot-handle-focus {
-	background-color: red !important;
-	border: 1px solid red;
+	background-color: #ff8400 !important;
+	border-color: #ff8400 !important;
+	box-shadow: 0 0 0 5px rgba(194, 69, 11, 0.2);
 }
+</style>
+<style lang="scss" scoped>
+.aspect-ratio-box {
+	position: relative;
+	max-width: 1280px;
+	min-width: 500px;
+}
+.aspect-ratio-box-inside {
+	position: absolute;
+	left: 0;
+	top: 0;
+	right: 0;
+	bottom: 0;
+	background: white;
 
-.vue-slider-dot {
-	background-color: red !important;
+	.video-background-img {
+		width: 100%;
+		height: 100%;
+		top: 0;
+		left: 0;
+		position: absolute;
+		object-fit: cover;
+	}
+	.video-character-img {
+		width: 42%;
+		position: absolute;
+	}
+	.vidio-character-img-mask {
+		width: 100%;
+		height: 10%;
+		left: 0;
+		position: absolute;
+		background: white;
+	}
 }
 </style>
